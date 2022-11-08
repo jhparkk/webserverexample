@@ -37,7 +37,7 @@ func TestUsers(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(http.StatusOK, res.StatusCode)
 	data, _ := ioutil.ReadAll(res.Body)
-	assert.Contains(string(data), "Get UserInfo")
+	assert.Contains(string(data), "no users")
 }
 
 func TestGetUserInfo(t *testing.T) {
@@ -46,11 +46,13 @@ func TestGetUserInfo(t *testing.T) {
 	ts := httptest.NewServer(NewHandler())
 	defer ts.Close()
 
-	res, err := http.Get(ts.URL + "/users/89")
+	res, err := http.Get(ts.URL + "/users?name=jonghan")
 	assert.NoError(err)
-	assert.Equal(http.StatusOK, res.StatusCode)
+
+	//assert.Equal(http.StatusOK, res.StatusCode)
 	data, _ := ioutil.ReadAll(res.Body)
-	assert.Contains(string(data), "User ID : ")
+	//assert.Contains(string(data), "User ID : ")
+	log.Print(string(data))
 }
 
 func TestCreateUserInfo(t *testing.T) {
@@ -119,9 +121,8 @@ func TestUpdateUser(t *testing.T) {
 	updateStr := fmt.Sprintf(
 		`{ 
 			"id":%d,
-			"first_name":"updated_fn",
-			"last_name":"updated_ln",
-			"email":"updated_email@sinsiway.com"
+			"first_name":"updated_first_name",
+			"last_name":"updated_last_name"
 		}`,
 		user.ID)
 
@@ -134,4 +135,44 @@ func TestUpdateUser(t *testing.T) {
 
 	data, _ = ioutil.ReadAll(res.Body)
 	log.Print(string(data))
+}
+
+func TestGetUserList(t *testing.T) {
+	assert := assert.New(t)
+
+	ts := httptest.NewServer(NewHandler())
+	defer ts.Close()
+
+	// craete user
+	res, err := http.Post(ts.URL+"/users", "application/json", strings.NewReader(`{"first_name":"test1", "last_name":"test1", "email":"test1@sinsiawy.com"}`))
+	assert.NoError(err)
+	assert.Equal(http.StatusCreated, res.StatusCode) // code : StatusCreated
+
+	data, _ := ioutil.ReadAll(res.Body)
+	log.Print(string(data))
+
+	// craete user
+	res, err = http.Post(ts.URL+"/users", "application/json", strings.NewReader(`{"first_name":"test2", "last_name":"test2", "email":"test2k@sinsiawy.com"}`))
+	assert.NoError(err)
+	assert.Equal(http.StatusCreated, res.StatusCode) // code : StatusCreated
+
+	data, _ = ioutil.ReadAll(res.Body)
+	log.Print(string(data))
+
+	res, err = http.Get(ts.URL + "/users")
+	assert.NoError(err)
+	assert.Equal(http.StatusOK, res.StatusCode)
+
+	users := []*User{}
+	err = json.NewDecoder(res.Body).Decode(&users)
+	assert.Equal(2, len(users))
+
+	/*
+		data, err = ioutil.ReadAll(res.Body)
+
+		assert.NoError(err)
+		assert.NotZero(len(data))
+		log.Print(string(data))
+	*/
+
 }

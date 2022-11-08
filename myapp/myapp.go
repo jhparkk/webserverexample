@@ -3,6 +3,7 @@ package myapp
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -24,15 +25,36 @@ var idSeq int
 
 // index handler
 func indexHandler(w http.ResponseWriter, r *http.Request) {
+	log.Print("url : ", r.URL)
+
 	fmt.Fprintf(w, "hello world!")
 }
 
 func usersHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Get UserInfo by /users/{id}")
+	log.Print("url : ", r.URL)
+
+	if len(userMap) == 0 {
+		// there is no users
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "no users")
+	}
+
+	users := []*User{}
+	for _, u := range userMap {
+		//users = append(users,u)
+		users = append(users, u)
+	}
+	data, _ := json.Marshal(users)
+
+	w.Header().Add("Content-Type", "application/json") // before WriteHeader
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, string(data))
 }
 
 // create user
 func createUserHandler(w http.ResponseWriter, r *http.Request) {
+	log.Print("url : ", r.URL)
+
 	user := new(User)
 	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {
@@ -56,6 +78,7 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 // get user
 func getUserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	log.Print("vars : ", vars)
 	//fmt.Fprintf(w, "User Id: %v", vars["id"])
 
 	id, err := strconv.Atoi(vars["id"])
@@ -115,9 +138,16 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "not found User ID : ", reqUser.ID)
 		return
 	}
-	user.FirstName = reqUser.FirstName
-	user.LastName = reqUser.LastName
-	user.Email = reqUser.Email
+	if reqUser.FirstName != "" {
+		user.FirstName = reqUser.FirstName
+	}
+	if reqUser.LastName != "" {
+		user.LastName = reqUser.LastName
+	}
+	if reqUser.Email != "" {
+		user.Email = reqUser.Email
+	}
+
 	user.CreateAt = time.Now()
 
 	w.Header().Add("Content-Type", "application/json") // before WriteHeader
