@@ -29,7 +29,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 func usersHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Get UserInfo by /users/{id}")
-	fmt.Fprintf(w, "Get UserInfo by /users/{id}")
 }
 
 // create user
